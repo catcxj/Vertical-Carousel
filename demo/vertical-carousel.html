@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>地址垂直轮播选择</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
+
+    <!-- Link Swiper's CSS -->
+    <link rel="stylesheet" href="../dist/css/swiper.min.css">
+
+    <!-- Demo styles -->
+    <style>
+    * {
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+        -webkit-touch-callout: none;
+        -webkit-box-sizing: border-box;
+        box-sizing: border-box;
+    }
+    body {
+        background: #eee;
+        font-family: "Helvetica Neue",Helvetica,STHeiTi,sans-serif;
+        font-size: 14px;
+        color: #000;
+        margin: 0;
+        padding: 0;
+        line-height: 1.5;
+    }
+    .warp{position: relative;overflow:hidden;}
+    .ui-btn-s{
+        padding: 0;
+        width: 55px;
+        height: 25px;
+        line-height: 25px;
+        font-size: 13px;
+        min-width: 55px;
+        display: inline-block;
+        position: relative;
+        text-align: center;
+        background-color: #fdfdfd;
+        background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0.5,#fff),to(#fafafa));
+        border-radius: 3px;
+        vertical-align: top;
+        color: #00a5e0;
+        -webkit-box-sizing: border-box;
+        border: 1px solid #cacccd;
+        -webkit-background-clip: padding-box;
+        background-clip: padding-box;
+    }
+    .ui-btn-progress {
+        overflow: hidden;
+    }
+    .pull-right {
+        float: right;
+    }
+
+    /* swiper */
+    .swiper-container {
+        float: left;
+        width: 30%;
+        height: 150px;
+        margin: 0 auto 0 3%;
+    }
+    .swiper-slide {
+        text-align: center;
+        font-size: 18px;
+        width: 100%;
+        color: #888;
+
+        /* Center slide text vertically */
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: -webkit-flex;
+        display: flex;
+        -webkit-box-pack: center;
+        -ms-flex-pack: center;
+        -webkit-justify-content: center;
+        justify-content: center;
+        -webkit-box-align: center;
+        -ms-flex-align: center;
+        -webkit-align-items: center;
+        align-items: center;
+    }
+    .swiper-slide-active{
+        display: block;
+        color: #333;
+        text-align: center;
+        line-height: 1.7;
+    }
+
+    /* area-box */
+    .area-box{position: absolute;bottom: 0;width:100%;height: 150px;background: #f5f5f5;box-shadow: 0px 0px 170px #888888 inset;}
+    .area-control{position: absolute;top: -35px;left: 0;z-index: 100;width: 100%;line-height: 1.8;background-color: #888;padding: 5px 10px;}
+    .area-control .area-cancel{color: #00a5e0;}
+    .w-top{position: absolute;top: 95px;left: 0;z-index: 100;width: 100%;background-color: #fff;opacity: .8;border-bottom: 1px solid #e2e2e2;}
+    .w-bottom{position: absolute;bottom: 95px;left: 0;z-index: 100;width: 100%;background-color: #fff;opacity: .8;border-top: 1px solid #e2e2e2;}
+    </style>
+</head>
+<body>
+    <div class="warp">
+        <div class="area-box">
+            <div class="area-control">
+                <a class="area-cancel">取消</a>
+                <button class="ui-btn-s ui-btn-progress pull-right area-sure">确定</button>
+            </div>
+            <div class="w-top"></div>
+            <div class="swiper-container js-province">
+                <div class="swiper-wrapper">
+                </div>
+            </div>
+            <div class="swiper-container js-city">
+                <div class="swiper-wrapper">
+                </div>
+            </div>
+            <div class="swiper-container js-county">
+                <div class="swiper-wrapper">
+                </div>
+            </div>
+            <div class="w-bottom"></div>
+        </div>
+    </div>
+
+    <!-- Swiper JS -->
+    <script src="zepto.min.js"></script>
+    <script src="../dist/js/swiper.jquery.min.js"></script>
+    <script src="area.js"></script>
+    <script type="text/javascript">
+    $('.warp').height($(window).height());
+    $('.area-sure').click(function(){
+        alert(AreaGetName());
+        alert(AreaGetValue())
+        return false;
+    });
+    $('.area-cancel').click(function(){
+        AreaReset();
+    });
+    </script>
+
+    <!-- Initialize Swiper -->
+    <script>
+    // 设定所有省份
+    var boxProvince = $('.js-province').find('.swiper-wrapper');
+    for(var i = 0; i < _dataArea.length; i++){
+        boxProvince.append(AreaCreateOption(_dataArea[i]['name'], _dataArea[i]['dicpath']));
+    }
+
+    // 初始化垂直轮播效果
+    new Swiper('.swiper-container', {
+        direction: 'vertical',
+        slidesPerView: 4,
+        centeredSlides: true,
+        paginationClickable: true,
+        spaceBetween: 10,
+        effect: 'coverflow',
+        coverflow: {
+            rotate: 50,
+            stretch: 0,
+            depth: 100,
+            modifier: 1,
+            slideShadows : false
+        }
+    });
+    var province = $('.js-province')[0].swiper,
+        city = $('.js-city')[0].swiper,
+        county = $('.js-county')[0].swiper;
+
+    province.on('touchEnd', function(){
+        AreaChange(province, city, 0, _dataArea);
+    });
+    /* 防止手指快速滑动造成节点滞后 */
+    province.on('slideChangeEnd', function(){
+        AreaChange(province, city, 0, _dataArea);
+    });
+    AreaChange(province, city, 0, _dataArea);
+
+    city.on('touchEnd', function(){
+        var areaList = AreaFindData(_dataArea, $('.js-province .swiper-slide-active').data('value')).son;
+        AreaChange(city, county, 1, areaList);
+        county.slideTo(0);
+    });
+    /* 防止手指快速滑动造成节点滞后 */
+    city.on('slideChangeEnd', function(){
+        var areaList = AreaFindData(_dataArea, $('.js-province .swiper-slide-active').data('value')).son;
+        AreaChange(city, county, 1, areaList);
+        county.slideTo(0);
+    });
+    // ***************************************************************************************
+    // 通用函数
+    function AreaChange(prev, area, index, areaList){
+        area.removeAllSlides();
+
+        var _jsList = $('.swiper-container');
+        for(var i = index, len = _jsList.length - 1; i < len; i++){
+            var _$item = _jsList.eq(i).find('.swiper-slide-active');
+            if(_$item.length){
+                areaList = AreaFindData(areaList, _$item.data('value')).son;
+            }
+        }
+
+        var _list = [];
+        for(var i = 0, len = areaList.length; i < len; i++){
+            _list.push(AreaCreateOption(areaList[i]['name'], areaList[i]['dicpath']));
+        }
+        area.appendSlide(_list);
+
+        if(area.container.hasClass('js-city')){
+            AreaChange(city, county, 1, areaList);
+        }
+    }
+
+    function AreaCreateOption(name, value){
+        return '<div class="swiper-slide" data-value='+value+'>'+name+'</div>';
+    }
+
+    function AreaFindData(dataArea, dicpath){
+        var _data = {data: [], index: 0};
+        for(var i = 0, len = dataArea.length; i < len; i++){
+            if(dataArea[i].dicpath == dicpath){
+                _data.son = dataArea[i].son || [];
+                _data.index = i;
+                return _data;
+            }
+        }
+        return _data;
+    }
+
+    function AreaReset(){
+        province.slideTo(0);
+        return false;
+    }
+
+    function AreaGetValue(){
+        return province.container.find('.swiper-slide-active').attr('data-value')
+                +'-'+city.container.find('.swiper-slide-active').attr('data-value')
+                +'-'+county.container.find('.swiper-slide-active').attr('data-value');
+    }
+
+    function AreaGetName(){
+        return province.container.find('.swiper-slide-active').html()
+                +'-'+city.container.find('.swiper-slide-active').html()
+                +'-'+county.container.find('.swiper-slide-active').html();
+    }
+
+    // @areaList: 各个dicpath，从大到小排序
+    // AreaSetOption(['100100010005','1001000100050003','10010001000500030003'])
+    function AreaSetOption(areaList){
+        var _pData = AreaFindData(_dataArea, areaList[0]),
+            _cData = AreaFindData(_pData.son, areaList[1]),
+            _cyData = AreaFindData(_cData.son, areaList[2]),
+            _list = [];
+        // 省
+        province.slideTo(_pData.index, 0, false);
+
+        // 市
+        city.removeAllSlides();
+        for(var i = 0, len = _pData.son.length; i < len; i++){
+            _list.push(AreaCreateOption(_pData.son[i]['name'], _pData.son[i]['dicpath']));
+        }
+        city.appendSlide(_list);
+        city.slideTo(_cData.index, 0, false);
+
+        // 县
+        county.removeAllSlides();
+        _list = []
+        for(var i = 0, len = _cData.son.length; i < len; i++){
+            _list.push(AreaCreateOption(_cData.son[i]['name'], _cData.son[i]['dicpath']));
+        }
+        county.appendSlide(_list);
+        county.slideTo(_cyData.index, 0, false);
+        return false;
+    }
+    </script>
+</body>
+</html>
